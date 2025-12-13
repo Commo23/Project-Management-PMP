@@ -1,12 +1,7 @@
-import { useState } from 'react';
 import { useProject } from '@/contexts/ProjectContext';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { GripVertical, Bug, Zap, Wrench, HelpCircle, Plus, Pencil, Trash2 } from 'lucide-react';
-import { BacklogItem } from '@/types/project';
-import { BacklogItemDialog } from '@/components/dialogs/BacklogItemDialog';
-import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
+import { GripVertical, Bug, Zap, Wrench, HelpCircle } from 'lucide-react';
 
 const typeIcons = {
   feature: Zap,
@@ -23,11 +18,7 @@ const priorityStyles = {
 };
 
 export function BacklogView() {
-  const { backlog, sprints, moveBacklogItem, deleteBacklogItem } = useProject();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<BacklogItem | undefined>();
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const { backlog, sprints, moveBacklogItem, reorderBacklog } = useProject();
 
   const productBacklog = backlog.filter(item => !item.sprintId);
   const sprintBacklog = sprints.map(sprint => ({
@@ -53,42 +44,13 @@ export function BacklogView() {
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleAdd = () => {
-    setSelectedItem(undefined);
-    setDialogOpen(true);
-  };
-
-  const handleEdit = (item: BacklogItem) => {
-    setSelectedItem(item);
-    setDialogOpen(true);
-  };
-
-  const handleDeleteClick = (itemId: string) => {
-    setItemToDelete(itemId);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleConfirmDelete = () => {
-    if (itemToDelete) {
-      deleteBacklogItem(itemToDelete);
-      setItemToDelete(null);
-    }
-    setDeleteDialogOpen(false);
-  };
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Product Backlog</h1>
-          <p className="mt-2 text-muted-foreground">
-            Priorisez et assignez les éléments aux sprints
-          </p>
-        </div>
-        <Button onClick={handleAdd} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Nouvel élément
-        </Button>
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">Product Backlog</h1>
+        <p className="mt-2 text-muted-foreground">
+          Prioritize and assign backlog items to sprints
+        </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -101,11 +63,11 @@ export function BacklogView() {
           <div className="border-b border-border p-4">
             <h2 className="font-semibold text-foreground">Product Backlog</h2>
             <p className="text-sm text-muted-foreground">
-              {productBacklog.reduce((sum, item) => sum + item.storyPoints, 0)} points au total
+              {productBacklog.reduce((sum, item) => sum + item.storyPoints, 0)} points total
             </p>
           </div>
           <div className="max-h-[500px] overflow-y-auto p-4 space-y-2 scrollbar-thin">
-            {productBacklog.map((item) => {
+            {productBacklog.map((item, index) => {
               const Icon = typeIcons[item.type];
               return (
                 <div
@@ -126,20 +88,12 @@ export function BacklogView() {
                   <span className="flex h-7 w-7 items-center justify-center rounded bg-primary/10 text-xs font-medium text-primary flex-shrink-0">
                     {item.storyPoints}
                   </span>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="icon-sm" className="h-6 w-6" onClick={() => handleEdit(item)}>
-                      <Pencil className="h-3 w-3" />
-                    </Button>
-                    <Button variant="ghost" size="icon-sm" className="h-6 w-6 text-destructive hover:text-destructive" onClick={() => handleDeleteClick(item.id)}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
                 </div>
               );
             })}
             {productBacklog.length === 0 && (
               <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-border">
-                <p className="text-sm text-muted-foreground">Déposez des éléments ici</p>
+                <p className="text-sm text-muted-foreground">Drop items here</p>
               </div>
             )}
           </div>
@@ -177,20 +131,12 @@ export function BacklogView() {
                       <Icon className="h-3 w-3 text-muted-foreground" />
                       <span className="flex-1 text-sm text-foreground truncate">{item.title}</span>
                       <span className="text-xs font-medium text-primary">{item.storyPoints}</span>
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon-sm" className="h-5 w-5" onClick={() => handleEdit(item)}>
-                          <Pencil className="h-2.5 w-2.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon-sm" className="h-5 w-5 text-destructive hover:text-destructive" onClick={() => handleDeleteClick(item.id)}>
-                          <Trash2 className="h-2.5 w-2.5" />
-                        </Button>
-                      </div>
                     </div>
                   );
                 })}
                 {sprint.items.length === 0 && (
                   <div className="flex h-16 items-center justify-center rounded-lg border border-dashed border-border">
-                    <p className="text-xs text-muted-foreground">Déposez des éléments ici</p>
+                    <p className="text-xs text-muted-foreground">Drop items here</p>
                   </div>
                 )}
               </div>
@@ -198,15 +144,6 @@ export function BacklogView() {
           ))}
         </div>
       </div>
-
-      <BacklogItemDialog open={dialogOpen} onOpenChange={setDialogOpen} item={selectedItem} />
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        title="Supprimer l'élément"
-        description="Êtes-vous sûr de vouloir supprimer cet élément du backlog ? Cette action est irréversible."
-        onConfirm={handleConfirmDelete}
-      />
     </div>
   );
 }

@@ -1,12 +1,7 @@
-import { useState } from 'react';
 import { useProject } from '@/contexts/ProjectContext';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { CheckCircle, Clock, Plus, Pencil, Trash2 } from 'lucide-react';
-import { Requirement } from '@/types/project';
-import { RequirementDialog } from '@/components/dialogs/RequirementDialog';
-import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
+import { FileText, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
 const typeColors = {
   functional: 'bg-primary/20 text-primary',
@@ -37,65 +32,27 @@ const priorityStyles = {
 };
 
 export function RequirementsMatrix() {
-  const { requirements, tasks, deleteRequirement } = useProject();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedRequirement, setSelectedRequirement] = useState<Requirement | undefined>();
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [requirementToDelete, setRequirementToDelete] = useState<string | null>(null);
-
-  const handleAdd = () => {
-    setSelectedRequirement(undefined);
-    setDialogOpen(true);
-  };
-
-  const handleEdit = (requirement: Requirement) => {
-    setSelectedRequirement(requirement);
-    setDialogOpen(true);
-  };
-
-  const handleDeleteClick = (requirementId: string) => {
-    setRequirementToDelete(requirementId);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleConfirmDelete = () => {
-    if (requirementToDelete) {
-      deleteRequirement(requirementToDelete);
-      setRequirementToDelete(null);
-    }
-    setDeleteDialogOpen(false);
-  };
+  const { requirements, tasks } = useProject();
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Traçabilité des exigences</h1>
-          <p className="mt-2 text-muted-foreground">
-            Suivez les exigences de la définition à la vérification
-          </p>
-        </div>
-        <Button onClick={handleAdd} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Nouvelle exigence
-        </Button>
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">Requirements Traceability</h1>
+        <p className="mt-2 text-muted-foreground">
+          Track requirements from definition to verification
+        </p>
       </div>
 
       {/* Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-4">
-        {[
-          { status: 'draft', label: 'Brouillon' },
-          { status: 'approved', label: 'Approuvé' },
-          { status: 'implemented', label: 'Implémenté' },
-          { status: 'verified', label: 'Vérifié' },
-        ].map(({ status, label }) => {
+        {['draft', 'approved', 'implemented', 'verified'].map((status) => {
           const count = requirements.filter(r => r.status === status).length;
           const Icon = statusIcons[status as keyof typeof statusIcons];
           
           return (
             <div key={status} className="rounded-xl border border-border bg-card p-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">{label}</span>
+                <span className="text-sm text-muted-foreground capitalize">{status}</span>
                 <Icon className={cn("h-4 w-4", statusColors[status as keyof typeof statusColors])} />
               </div>
               <p className="mt-2 text-3xl font-bold text-foreground">{count}</p>
@@ -111,12 +68,11 @@ export function RequirementsMatrix() {
             <thead>
               <tr className="border-b border-border bg-muted/50">
                 <th className="p-4 text-left text-sm font-medium text-muted-foreground">ID</th>
-                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Exigence</th>
+                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Requirement</th>
                 <th className="p-4 text-left text-sm font-medium text-muted-foreground">Type</th>
-                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Priorité</th>
-                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Statut</th>
-                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Tâches liées</th>
-                <th className="p-4 text-right text-sm font-medium text-muted-foreground">Actions</th>
+                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Priority</th>
+                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Status</th>
+                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Linked Tasks</th>
               </tr>
             </thead>
             <tbody>
@@ -167,18 +123,8 @@ export function RequirementsMatrix() {
                           ))}
                         </div>
                       ) : (
-                        <span className="text-xs text-muted-foreground">Aucune tâche liée</span>
+                        <span className="text-xs text-muted-foreground">No linked tasks</span>
                       )}
-                    </td>
-                    <td className="p-4">
-                      <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon-sm" onClick={() => handleEdit(req)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon-sm" className="text-destructive hover:text-destructive" onClick={() => handleDeleteClick(req.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
                     </td>
                   </tr>
                 );
@@ -187,15 +133,6 @@ export function RequirementsMatrix() {
           </table>
         </div>
       </div>
-
-      <RequirementDialog open={dialogOpen} onOpenChange={setDialogOpen} requirement={selectedRequirement} />
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        title="Supprimer l'exigence"
-        description="Êtes-vous sûr de vouloir supprimer cette exigence ? Cette action est irréversible."
-        onConfirm={handleConfirmDelete}
-      />
     </div>
   );
 }

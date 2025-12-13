@@ -1,14 +1,11 @@
 import { Task } from '@/types/project';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { GripVertical, User, Pencil, Trash2 } from 'lucide-react';
+import { GripVertical, User } from 'lucide-react';
 
 interface KanbanCardProps {
   task: Task;
   onDragStart: (e: React.DragEvent, taskId: string) => void;
-  onEdit: () => void;
-  onDelete: () => void;
 }
 
 const priorityStyles = {
@@ -18,7 +15,7 @@ const priorityStyles = {
   critical: 'bg-destructive/20 text-destructive',
 };
 
-export function KanbanCard({ task, onDragStart, onEdit, onDelete }: KanbanCardProps) {
+export function KanbanCard({ task, onDragStart }: KanbanCardProps) {
   return (
     <div
       draggable
@@ -27,27 +24,6 @@ export function KanbanCard({ task, onDragStart, onEdit, onDelete }: KanbanCardPr
     >
       <div className="mb-2 flex items-start justify-between gap-2">
         <GripVertical className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e) => { e.stopPropagation(); onEdit(); }}
-          >
-            <Pencil className="h-3 w-3" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          >
-            <Trash2 className="h-3 w-3" />
-          </Button>
-        </div>
-      </div>
-      
-      <div className="flex items-center gap-2 mb-2">
         <Badge className={cn("text-xs", priorityStyles[task.priority])}>
           {task.priority}
         </Badge>
