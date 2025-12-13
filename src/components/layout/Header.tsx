@@ -1,9 +1,35 @@
 import { useProject } from '@/contexts/ProjectContext';
 import { Button } from '@/components/ui/button';
-import { Layers, RefreshCw, Zap, Download, Settings } from 'lucide-react';
+import { Layers, RefreshCw, Zap, Download, Settings, FileJson } from 'lucide-react';
+import { toast } from 'sonner';
 
 export function Header() {
-  const { mode, setMode } = useProject();
+  const { mode, setMode, tasks, backlog, risks, stakeholders, requirements, phases } = useProject();
+
+  const handleExport = () => {
+    const data = {
+      mode,
+      phases,
+      tasks,
+      backlog,
+      risks,
+      stakeholders,
+      requirements,
+      exportedAt: new Date().toISOString(),
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pmp-project-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast.success('Projet exporté avec succès');
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -18,7 +44,7 @@ export function Header() {
               PMP Flow Designer
             </span>
             <span className="text-xs text-muted-foreground">
-              Project Management Visualization
+              Visualisation de gestion de projet
             </span>
           </div>
         </div>
@@ -47,12 +73,9 @@ export function Header() {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button variant="outline" size="sm" className="gap-2" onClick={handleExport}>
             <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">Export</span>
-          </Button>
-          <Button variant="ghost" size="icon-sm">
-            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">Exporter</span>
           </Button>
         </div>
       </div>

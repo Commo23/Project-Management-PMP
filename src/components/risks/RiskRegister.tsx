@@ -1,7 +1,12 @@
+import { useState } from 'react';
 import { useProject } from '@/contexts/ProjectContext';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { AlertTriangle, Shield, RefreshCw, Check } from 'lucide-react';
+import { AlertTriangle, Shield, RefreshCw, Check, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Risk } from '@/types/project';
+import { RiskDialog } from '@/components/dialogs/RiskDialog';
+import { ConfirmDialog } from '@/components/dialogs/ConfirmDialog';
 
 const probabilityColors = {
   low: 'bg-success/20 text-success',
@@ -24,7 +29,11 @@ const responseIcons = {
 };
 
 export function RiskRegister() {
-  const { risks } = useProject();
+  const { risks, deleteRisk } = useProject();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedRisk, setSelectedRisk] = useState<Risk | undefined>();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [riskToDelete, setRiskToDelete] = useState<string | null>(null);
 
   const getScoreColor = (score: number) => {
     if (score >= 12) return 'bg-destructive text-destructive-foreground';
@@ -33,36 +42,60 @@ export function RiskRegister() {
     return 'bg-success text-success-foreground';
   };
 
+  const handleAdd = () => {
+    setSelectedRisk(undefined);
+    setDialogOpen(true);
+  };
+
+  const handleEdit = (risk: Risk) => {
+    setSelectedRisk(risk);
+    setDialogOpen(true);
+  };
+
+  const handleDeleteClick = (riskId: string) => {
+    setRiskToDelete(riskId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (riskToDelete) {
+      deleteRisk(riskToDelete);
+      setRiskToDelete(null);
+    }
+    setDeleteDialogOpen(false);
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Risk Register</h1>
-        <p className="mt-2 text-muted-foreground">
-          Track and manage project risks
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Registre des risques</h1>
+          <p className="mt-2 text-muted-foreground">
+            Suivez et gérez les risques du projet
+          </p>
+        </div>
+        <Button onClick={handleAdd} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Nouveau risque
+        </Button>
       </div>
 
       {/* Risk Matrix Summary */}
       <div className="grid gap-4 sm:grid-cols-4">
-        {['Critical', 'High', 'Medium', 'Low'].map((level) => {
-          const count = risks.filter(r => {
-            const score = r.score;
-            if (level === 'Critical') return score >= 12;
-            if (level === 'High') return score >= 8 && score < 12;
-            if (level === 'Medium') return score >= 4 && score < 8;
-            return score < 4;
-          }).length;
+        {['Critique', 'Haut', 'Moyen', 'Bas'].map((level, idx) => {
+          const thresholds = [[12, Infinity], [8, 12], [4, 8], [0, 4]];
+          const count = risks.filter(r => r.score >= thresholds[idx][0] && r.score < thresholds[idx][1]).length;
 
           return (
             <div key={level} className="rounded-xl border border-border bg-card p-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">{level} Risks</span>
+                <span className="text-sm text-muted-foreground">Risques {level}s</span>
                 <AlertTriangle className={cn(
                   "h-4 w-4",
-                  level === 'Critical' && "text-destructive",
-                  level === 'High' && "text-warning",
-                  level === 'Medium' && "text-info",
-                  level === 'Low' && "text-success",
+                  idx === 0 && "text-destructive",
+                  idx === 1 && "text-warning",
+                  idx === 2 && "text-info",
+                  idx === 3 && "text-success",
                 )} />
               </div>
               <p className="mt-2 text-3xl font-bold text-foreground">{count}</p>
@@ -77,13 +110,14 @@ export function RiskRegister() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/50">
-                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Risk</th>
-                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Probability</th>
+                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Risque</th>
+                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Probabilité</th>
                 <th className="p-4 text-left text-sm font-medium text-muted-foreground">Impact</th>
                 <th className="p-4 text-center text-sm font-medium text-muted-foreground">Score</th>
-                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Response</th>
-                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Owner</th>
-                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Status</th>
+                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Réponse</th>
+                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Responsable</th>
+                <th className="p-4 text-left text-sm font-medium text-muted-foreground">Statut</th>
+                <th className="p-4 text-right text-sm font-medium text-muted-foreground">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -133,6 +167,16 @@ export function RiskRegister() {
                         {risk.status}
                       </Badge>
                     </td>
+                    <td className="p-4">
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="icon-sm" onClick={() => handleEdit(risk)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon-sm" className="text-destructive hover:text-destructive" onClick={() => handleDeleteClick(risk.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </td>
                   </tr>
                 );
               })}
@@ -140,6 +184,15 @@ export function RiskRegister() {
           </table>
         </div>
       </div>
+
+      <RiskDialog open={dialogOpen} onOpenChange={setDialogOpen} risk={selectedRisk} />
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Supprimer le risque"
+        description="Êtes-vous sûr de vouloir supprimer ce risque ? Cette action est irréversible."
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }
