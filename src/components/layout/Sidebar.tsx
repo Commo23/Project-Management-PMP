@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useProject } from '@/contexts/ProjectContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { 
   GitBranch, 
   Table2, 
@@ -11,7 +12,8 @@ import {
   Users,
   Target,
   ListTodo,
-  Calendar
+  Calendar,
+  UserCircle
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -19,32 +21,36 @@ interface SidebarProps {
   onViewChange: (view: string) => void;
 }
 
-const navigationItems = [
-  { id: 'flow', label: 'Project Flow', icon: GitBranch },
-  { id: 'kanban', label: 'Kanban Board', icon: LayoutDashboard },
-  { id: 'raci', label: 'RACI Matrix', icon: Table2 },
-  { id: 'charts', label: 'Charts', icon: BarChart3 },
-  { id: 'backlog', label: 'Product Backlog', icon: ListTodo },
-  { id: 'wbs', label: 'WBS', icon: Target },
-  { id: 'risks', label: 'Risk Register', icon: AlertTriangle },
-  { id: 'stakeholders', label: 'Stakeholders', icon: Users },
-  { id: 'requirements', label: 'Requirements', icon: FileText },
-  { id: 'gantt', label: 'Timeline', icon: Calendar },
-];
-
 export function Sidebar({ activeView, onViewChange }: SidebarProps) {
   const { mode } = useProject();
+  const { t, language } = useI18n();
+
+  const navigationItems = [
+    { id: 'flow', label: t.nav.projectFlow, icon: GitBranch },
+    { id: 'kanban', label: t.nav.kanbanBoard, icon: LayoutDashboard },
+    { id: 'raci', label: t.nav.raciMatrix, icon: Table2 },
+    { id: 'charts', label: t.nav.charts, icon: BarChart3 },
+    { id: 'backlog', label: t.nav.productBacklog, icon: ListTodo },
+    { id: 'wbs', label: t.nav.wbs, icon: Target },
+    { id: 'risks', label: t.nav.riskRegister, icon: AlertTriangle },
+    { id: 'stakeholders', label: t.nav.stakeholders, icon: Users },
+    { id: 'team', label: t.nav.team, icon: UserCircle },
+    { id: 'requirements', label: t.nav.requirements, icon: FileText },
+    { id: 'gantt', label: t.nav.timeline, icon: Calendar },
+  ];
 
   return (
-    <aside className="fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] w-64 border-r border-border bg-sidebar">
+    <aside className="h-full w-64 border-r border-border bg-sidebar">
       <div className="flex h-full flex-col gap-2 p-4">
         <div className="mb-2 flex items-center gap-2 px-2">
           <div className={cn(
             "h-2 w-2 rounded-full",
-            mode === 'waterfall' ? 'bg-accent' : 'bg-primary'
+            mode === 'waterfall' ? 'bg-accent' : 
+            mode === 'agile' ? 'bg-primary' : 
+            'bg-warning'
           )} />
           <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            {mode} Mode
+            {mode === 'hybrid' ? t.modes.hybrid : mode === 'waterfall' ? t.modes.waterfall : t.modes.agile} {t.modes.mode}
           </span>
         </div>
         
@@ -72,7 +78,9 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
 
         <div className="mt-auto rounded-lg border border-border bg-muted/30 p-4">
           <p className="text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground">Tip:</span> Click on phases in the flow to see detailed inputs, outputs, and tools.
+            <span className="font-semibold text-foreground">{language === 'fr' ? 'Astuce :' : 'Tip:'}</span> {language === 'fr' 
+              ? 'Cliquez sur les phases du flux pour voir les intrants, extrants et outils détaillés.'
+              : 'Click on phases in the flow to see detailed inputs, outputs, and tools.'}
           </p>
         </div>
       </div>

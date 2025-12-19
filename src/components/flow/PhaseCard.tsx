@@ -22,6 +22,7 @@ const phaseIcons = {
   execution: Play,
   monitoring: Eye,
   closing: CheckCircle2,
+  custom: FileText,
 };
 
 const phaseStyles = {
@@ -30,6 +31,7 @@ const phaseStyles = {
   execution: 'phase-execution border-phase-execution/30 hover:border-phase-execution',
   monitoring: 'phase-monitoring border-phase-monitoring/30 hover:border-phase-monitoring',
   closing: 'phase-closing border-phase-closing/30 hover:border-phase-closing',
+  custom: 'border-primary/30 hover:border-primary bg-primary/5',
 };
 
 const phaseGradients = {
@@ -38,10 +40,12 @@ const phaseGradients = {
   execution: 'from-phase-execution/20 to-transparent',
   monitoring: 'from-phase-monitoring/20 to-transparent',
   closing: 'from-phase-closing/20 to-transparent',
+  custom: 'from-primary/20 to-transparent',
 };
 
 export function PhaseCard({ phase, isActive, onClick, showConnector = true }: PhaseCardProps) {
-  const Icon = phaseIcons[phase.type];
+  const Icon = phaseIcons[phase.type] || phaseIcons.custom;
+  const isCustom = phase.isCustom || phase.type === 'custom';
   
   return (
     <div className="flex items-center">
@@ -49,14 +53,14 @@ export function PhaseCard({ phase, isActive, onClick, showConnector = true }: Ph
         onClick={onClick}
         className={cn(
           "group relative flex w-48 flex-col rounded-xl border-2 bg-card p-4 text-left transition-all duration-300",
-          phaseStyles[phase.type],
+          phaseStyles[phase.type] || phaseStyles.custom,
           isActive && "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-lg scale-105"
         )}
       >
         {/* Gradient overlay */}
         <div className={cn(
           "absolute inset-0 rounded-xl bg-gradient-to-br opacity-0 transition-opacity duration-300 group-hover:opacity-100",
-          phaseGradients[phase.type]
+          phaseGradients[phase.type] || phaseGradients.custom
         )} />
         
         <div className="relative z-10">
@@ -64,13 +68,25 @@ export function PhaseCard({ phase, isActive, onClick, showConnector = true }: Ph
           <div className="mb-3 flex items-center justify-between">
             <div className={cn(
               "flex h-10 w-10 items-center justify-center rounded-lg",
-              `bg-phase-${phase.type}/20`
+              isCustom 
+                ? "bg-primary/20" 
+                : `bg-phase-${phase.type}/20`
             )}>
-              <Icon className={cn("h-5 w-5", `text-phase-${phase.type}`)} />
+              <Icon className={cn(
+                "h-5 w-5",
+                isCustom 
+                  ? "text-primary" 
+                  : `text-phase-${phase.type}`
+              )} />
             </div>
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
-              {phase.order}
-            </span>
+            <div className="flex items-center gap-1">
+              {isCustom && (
+                <span className="text-[10px] text-primary font-semibold">CUSTOM</span>
+              )}
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+                {phase.order}
+              </span>
+            </div>
           </div>
           
           {/* Title */}

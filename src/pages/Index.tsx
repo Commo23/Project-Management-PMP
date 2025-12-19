@@ -10,47 +10,72 @@ import { BacklogView } from '@/components/backlog/BacklogView';
 import { WBSView } from '@/components/wbs/WBSView';
 import { RiskRegister } from '@/components/risks/RiskRegister';
 import { StakeholderMatrix } from '@/components/stakeholders/StakeholderMatrix';
+import { TeamManagement } from '@/components/team/TeamManagement';
 import { RequirementsMatrix } from '@/components/requirements/RequirementsMatrix';
 import { GanttChart } from '@/components/charts/GanttChart';
+import { cn } from '@/lib/utils';
 
 export default function Index() {
   const [activeView, setActiveView] = useState('flow');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const renderView = () => {
-    switch (activeView) {
-      case 'flow':
-        return <ProjectFlow />;
-      case 'kanban':
-        return <KanbanBoard />;
-      case 'raci':
-        return <RACIMatrix />;
-      case 'charts':
-        return <ChartsView />;
-      case 'backlog':
-        return <BacklogView />;
-      case 'wbs':
-        return <WBSView />;
-      case 'risks':
-        return <RiskRegister />;
-      case 'stakeholders':
-        return <StakeholderMatrix />;
-      case 'requirements':
-        return <RequirementsMatrix />;
-      case 'gantt':
-        return <GanttChart />;
-      default:
-        return <ProjectFlow />;
+    try {
+      switch (activeView) {
+        case 'flow':
+          return <ProjectFlow />;
+        case 'kanban':
+          return <KanbanBoard />;
+        case 'raci':
+          return <RACIMatrix />;
+        case 'charts':
+          return <ChartsView />;
+        case 'backlog':
+          return <BacklogView />;
+        case 'wbs':
+          return <WBSView />;
+        case 'risks':
+          return <RiskRegister />;
+        case 'stakeholders':
+          return <StakeholderMatrix />;
+        case 'team':
+          return <TeamManagement />;
+        case 'requirements':
+          return <RequirementsMatrix />;
+        case 'gantt':
+          return <GanttChart />;
+        default:
+          return <ProjectFlow />;
+      }
+    } catch (error) {
+      console.error('Error rendering view:', error);
+      return (
+        <div className="p-8">
+          <h1 className="text-2xl font-bold text-destructive">Error Loading View</h1>
+          <p className="mt-2 text-muted-foreground">{String(error)}</p>
+        </div>
+      );
     }
   };
 
   return (
     <ProjectProvider>
       <div className="min-h-screen bg-background">
-        <Header />
-        <div className="flex">
-          <Sidebar activeView={activeView} onViewChange={setActiveView} />
-          <main className="ml-64 flex-1 p-8">
-            {renderView()}
+        <Header sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+        <div className="flex pt-16">
+          <div className={cn(
+            "fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] transition-transform duration-300",
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          )}>
+            <Sidebar activeView={activeView} onViewChange={setActiveView} />
+          </div>
+          <main className={cn(
+            "flex-1 transition-all duration-300 min-w-0",
+            sidebarOpen ? "ml-64" : "ml-0"
+          )}>
+            <div className="w-full h-full p-4 md:p-8 overflow-x-auto">
+              {renderView()}
+            </div>
           </main>
         </div>
       </div>
