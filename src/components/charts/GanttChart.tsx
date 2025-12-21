@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useProject } from '@/contexts/ProjectContext';
+import { useSettings } from '@/contexts/SettingsContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,6 +46,7 @@ export function GanttChart() {
     requirements,
     risks
   } = useProject();
+  const { settings } = useSettings();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<GanttTask | null>(null);
@@ -53,8 +55,13 @@ export function GanttChart() {
   const [filterType, setFilterType] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPhase, setFilterPhase] = useState<string>('all');
-  const [zoomLevel, setZoomLevel] = useState<'day' | 'week' | 'month'>('week');
+  const [zoomLevel, setZoomLevel] = useState<'day' | 'week' | 'month'>(settings.ganttZoomLevel);
   const [selectedTaskDetail, setSelectedTaskDetail] = useState<GanttTask | null>(null);
+  
+  // Sync zoom level with settings
+  useEffect(() => {
+    setZoomLevel(settings.ganttZoomLevel);
+  }, [settings.ganttZoomLevel]);
 
   const handleAddTask = () => {
     setSelectedTask(null);
@@ -259,20 +266,24 @@ export function GanttChart() {
           </div>
           <div className="text-2xl font-bold text-purple-600">{stats.averageProgress}%</div>
         </div>
-        <div className="rounded-xl border border-border bg-card p-4">
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <DollarSign className="h-4 w-4" />
-            <span>Budget</span>
-          </div>
-          <div className="text-2xl font-bold">${stats.totalBudget.toLocaleString()}</div>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-4">
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <DollarSign className="h-4 w-4" />
-            <span>Actual</span>
-          </div>
-          <div className="text-2xl font-bold">${stats.totalActualCost.toLocaleString()}</div>
-        </div>
+        {!settings.confidentialMode && (
+          <>
+            <div className="rounded-xl border border-border bg-card p-4">
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <DollarSign className="h-4 w-4" />
+                <span>Budget</span>
+              </div>
+              <div className="text-2xl font-bold">${stats.totalBudget.toLocaleString()}</div>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4">
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <DollarSign className="h-4 w-4" />
+                <span>Actual</span>
+              </div>
+              <div className="text-2xl font-bold">${stats.totalActualCost.toLocaleString()}</div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Filters and Controls */}
@@ -450,20 +461,24 @@ export function GanttChart() {
                           title={`${task.name}: ${task.progress}%`}
                   >
                     {/* Progress */}
-                    <div 
-                            className={cn(
-                              "absolute inset-y-0 left-0 rounded",
-                              statusColor,
-                              "opacity-80"
-                            )}
-                      style={{ width: `${task.progress}%` }}
-                    />
-                          {/* Progress text */}
-                          {task.progress > 10 && (
-                            <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-white">
-                              {task.progress}%
-                            </span>
+                    {settings.ganttShowProgress && (
+                      <>
+                        <div 
+                          className={cn(
+                            "absolute inset-y-0 left-0 rounded",
+                            statusColor,
+                            "opacity-80"
                           )}
+                          style={{ width: `${task.progress}%` }}
+                        />
+                        {/* Progress text */}
+                        {task.progress > 10 && (
+                          <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-white">
+                            {task.progress}%
+                          </span>
+                        )}
+                      </>
+                    )}
                         </div>
                         {/* Actual dates overlay if different */}
                         {task.actualStartDate && task.actualStartDate !== task.startDate && (
@@ -479,7 +494,7 @@ export function GanttChart() {
                       </>
                     )}
                     {/* Dependencies arrows */}
-                    {task.dependencies && task.dependencies.length > 0 && (
+                    {settings.ganttShowDependencies && task.dependencies && task.dependencies.length > 0 && (
                       <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2">
                         <div className="h-0.5 w-2 bg-foreground/30" />
                       </div>
@@ -488,26 +503,28 @@ export function GanttChart() {
 
                   {/* Info */}
                   <div className="w-32 flex-shrink-0 text-right space-y-1">
-                    <div className="text-sm font-medium text-foreground">{task.progress}%</div>
+                    {settings.ganttShowProgress && (
+                      <div className="text-sm font-medium text-foreground">{task.progress}%</div>
+                    )}
                     <div className="flex items-center justify-end gap-2">
                       {task.status && (
                         <Badge variant="outline" className="text-xs capitalize">
                           {task.status}
                         </Badge>
                       )}
-                      {task.assignedTo && (
+                      {settings.ganttShowResources && task.assignedTo && (
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                           <Users className="h-3 w-3" />
                           <span className="truncate max-w-[60px]">{task.assignedTo}</span>
                         </div>
                       )}
                     </div>
-                    {task.budget && (
+                    {settings.ganttShowCosts && !settings.confidentialMode && task.budget && (
                       <div className="text-xs text-muted-foreground">
                         ${task.budget.toLocaleString()}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
 
                   {/* Actions */}
                   <div className="w-24 flex-shrink-0 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>

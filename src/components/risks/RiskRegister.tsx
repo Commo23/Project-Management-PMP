@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useProject } from '@/contexts/ProjectContext';
+import { useSettings } from '@/contexts/SettingsContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,6 +56,7 @@ export function RiskRegister() {
     wbs,
     tasks
   } = useProject();
+  const { settings } = useSettings();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState<Risk | null>(null);
@@ -232,13 +234,15 @@ export function RiskRegister() {
           <div className="text-sm text-muted-foreground">Closed</div>
           <div className="text-2xl font-bold">{stats.closedRisks}</div>
         </div>
-        <div className="rounded-xl border border-border bg-card p-4">
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <DollarSign className="h-4 w-4" />
-            <span>Est. Cost</span>
+        {!settings.confidentialMode && (
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <DollarSign className="h-4 w-4" />
+              <span>Est. Cost</span>
+            </div>
+            <div className="text-2xl font-bold">${stats.totalEstimatedCost.toLocaleString()}</div>
           </div>
-          <div className="text-2xl font-bold">${stats.totalEstimatedCost.toLocaleString()}</div>
-        </div>
+        )}
       </div>
 
       {/* Filters and Search */}
@@ -355,8 +359,9 @@ export function RiskRegister() {
       </div>
 
       {/* Risk Probability/Impact Matrix */}
-      <div className="rounded-xl border border-border bg-card p-6">
-        <h3 className="text-lg font-semibold mb-4">Risk Matrix</h3>
+      {settings.risksShowMatrix && (
+        <div className="rounded-xl border border-border bg-card p-6">
+          <h3 className="text-lg font-semibold mb-4">Risk Matrix</h3>
         <div className="grid grid-cols-4 gap-2">
           <div></div>
           <div className="text-center text-sm font-medium">Low</div>
@@ -385,7 +390,8 @@ export function RiskRegister() {
             </div>
           ))}
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Risk List */}
       <div className="rounded-xl border border-border bg-card overflow-hidden">

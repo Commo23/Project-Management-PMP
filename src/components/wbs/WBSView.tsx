@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useProject } from '@/contexts/ProjectContext';
+import { useSettings } from '@/contexts/SettingsContext';
 import { WBSNode } from '@/types/project';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -62,10 +63,21 @@ export function WBSView() {
     requirements = [],
     risks = []
   } = useProject();
+  const { settings } = useSettings();
 
   const phases = allPhases || [];
 
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+  
+  // Auto-expand all nodes if setting is enabled
+  useEffect(() => {
+    if (settings.wbsExpandAll) {
+      const allNodeIds = new Set(wbs.map(node => node.id));
+      setExpandedNodes(allNodeIds);
+    } else {
+      setExpandedNodes(new Set());
+    }
+  }, [settings.wbsExpandAll, wbs]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
   const [editingNode, setEditingNode] = useState<WBSNode | null>(null);
@@ -177,12 +189,16 @@ export function WBSView() {
     return phase?.name || null;
   };
 
-  const totalBudget = useMemo(() => wbs.reduce((sum, node) => sum + (node.budget || 0), 0), [wbs]);
+  const totalBudget = useMemo(() => {
+    if (!settings.wbsShowBudget) return 0;
+    return wbs.reduce((sum, node) => sum + (node.budget || 0), 0);
+  }, [wbs, settings.wbsShowBudget]);
   const totalEstimatedHours = useMemo(() => wbs.reduce((sum, node) => sum + (node.estimatedHours || 0), 0), [wbs]);
   const averageProgress = useMemo(() => {
+    if (!settings.wbsShowProgress) return 0;
     const total = wbs.reduce((sum, node) => sum + (node.progress || 0), 0);
     return wbs.length > 0 ? total / wbs.length : 0;
-  }, [wbs]);
+  }, [wbs, settings.wbsShowProgress]);
 
   const renderNode = (node: WBSNode, depth: number = 0) => {
     if (!node || !node.id) return null;
@@ -248,7 +264,7 @@ export function WBSView() {
             <p className="text-sm text-muted-foreground mb-2">{node.description}</p>
             
             <div className="flex items-center gap-4 flex-wrap text-xs text-muted-foreground">
-              {node.budget && (
+              {settings.wbsShowBudget && !settings.confidentialMode && node.budget && (
                 <div className="flex items-center gap-1">
                   <DollarSign className="h-3 w-3" />
                   <span>${node.budget.toLocaleString()}</span>
@@ -260,12 +276,18 @@ export function WBSView() {
                   <span>{node.estimatedHours}h</span>
                 </div>
               )}
-              {node.responsible && (
+              {settings.wbsShowDates && node.startDate && (
+                <div className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  <span>{format(new Date(node.startDate), 'MMM dd')} - {node.endDate ? format(new Date(node.endDate), 'MMM dd') : 'TBD'}</span>
+                </div>
+              )}
+              {settings.wbsShowResponsible && node.responsible && (
                 <div className="flex items-center gap-1">
                   <span>Responsible: {node.responsible}</span>
                 </div>
               )}
-              {(linkedTasks.length > 0 || linkedBacklogItems.length > 0 || linkedRequirements.length > 0 || linkedRisks.length > 0) && (
+              {settings.wbsShowLinkedItems && (linkedTasks.length > 0 || linkedBacklogItems.length > 0 || linkedRequirements.length > 0 || linkedRisks.length > 0) && (
                 <div className="flex items-center gap-1">
                   <Link2 className="h-3 w-3" />
                   <span>
@@ -275,7 +297,7 @@ export function WBSView() {
               )}
             </div>
 
-            {node.progress !== undefined && node.progress > 0 && (
+            {settings.wbsShowProgress && node.progress !== undefined && node.progress > 0 && (
               <div className="mt-2">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-muted-foreground">Progress</span>
@@ -378,13 +400,15 @@ export function WBSView() {
           </div>
           <p className="text-2xl font-bold">{wbs.length}</p>
         </div>
-        <div className="rounded-lg border border-border bg-card p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Total Budget</span>
+        {settings.wbsShowBudget && !settings.confidentialMode && (
+          <div className="rounded-lg border border-border bg-card p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Total Budget</span>
+            </div>
+            <p className="text-2xl font-bold">${totalBudget.toLocaleString()}</p>
           </div>
-          <p className="text-2xl font-bold">${totalBudget.toLocaleString()}</p>
-        </div>
+        )}
         <div className="rounded-lg border border-border bg-card p-4">
           <div className="flex items-center gap-2 mb-1">
             <Clock className="h-4 w-4 text-muted-foreground" />
@@ -392,13 +416,15 @@ export function WBSView() {
           </div>
           <p className="text-2xl font-bold">{totalEstimatedHours.toLocaleString()}</p>
         </div>
-        <div className="rounded-lg border border-border bg-card p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Avg Progress</span>
+        {settings.wbsShowProgress && (
+          <div className="rounded-lg border border-border bg-card p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Avg Progress</span>
+            </div>
+            <p className="text-2xl font-bold">{Math.round(averageProgress)}%</p>
           </div>
-          <p className="text-2xl font-bold">{Math.round(averageProgress)}%</p>
-        </div>
+        )}
       </div>
 
       {/* WBS Tree */}
@@ -427,9 +453,15 @@ export function WBSView() {
                 <th className="p-3 text-left text-sm font-medium text-muted-foreground">Name</th>
                 <th className="p-3 text-left text-sm font-medium text-muted-foreground">Description</th>
                 <th className="p-3 text-left text-sm font-medium text-muted-foreground">Status</th>
-                <th className="p-3 text-left text-sm font-medium text-muted-foreground">Progress</th>
-                <th className="p-3 text-left text-sm font-medium text-muted-foreground">Budget</th>
-                <th className="p-3 text-left text-sm font-medium text-muted-foreground">Responsible</th>
+                {settings.wbsShowProgress && (
+                  <th className="p-3 text-left text-sm font-medium text-muted-foreground">Progress</th>
+                )}
+                {settings.wbsShowBudget && !settings.confidentialMode && (
+                  <th className="p-3 text-left text-sm font-medium text-muted-foreground">Budget</th>
+                )}
+                {settings.wbsShowResponsible && (
+                  <th className="p-3 text-left text-sm font-medium text-muted-foreground">Responsible</th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -462,16 +494,22 @@ export function WBSView() {
                       </Badge>
                     )}
                   </td>
-                  <td className="p-3">
-                    <div className="flex items-center gap-2">
-                      <Progress value={node.progress || 0} className="h-2 w-20" />
-                      <span className="text-sm text-muted-foreground">{node.progress || 0}%</span>
-                    </div>
-                  </td>
-                  <td className="p-3 text-sm text-muted-foreground">
-                    {node.budget ? `$${node.budget.toLocaleString()}` : '-'}
-                  </td>
-                  <td className="p-3 text-sm text-muted-foreground">{node.responsible || '-'}</td>
+                  {settings.wbsShowProgress && (
+                    <td className="p-3">
+                      <div className="flex items-center gap-2">
+                        <Progress value={node.progress || 0} className="h-2 w-20" />
+                        <span className="text-sm text-muted-foreground">{node.progress || 0}%</span>
+                      </div>
+                    </td>
+                  )}
+                  {settings.wbsShowBudget && !settings.confidentialMode && (
+                    <td className="p-3 text-sm text-muted-foreground">
+                      {node.budget ? `$${node.budget.toLocaleString()}` : '-'}
+                    </td>
+                  )}
+                  {settings.wbsShowResponsible && (
+                    <td className="p-3 text-sm text-muted-foreground">{node.responsible || '-'}</td>
+                  )}
                 </tr>
                 );
               })}

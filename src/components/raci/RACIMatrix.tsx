@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useProject } from '@/contexts/ProjectContext';
+import { useSettings } from '@/contexts/SettingsContext';
 import { projectRoles, agileRoles } from '@/data/projectData';
 import { RACIRole, RACIEntityType } from '@/types/project';
 import { cn } from '@/lib/utils';
@@ -44,8 +45,15 @@ export function RACIMatrix() {
     addCustomRole,
     deleteCustomRole
   } = useProject();
+  const { settings } = useSettings();
   
-  const [activeTab, setActiveTab] = useState<RACIEntityType>('phase');
+  const [activeTab, setActiveTab] = useState<RACIEntityType>(() => {
+    // Set initial tab based on settings
+    if (settings.raciShowPhases) return 'phase';
+    if (settings.raciShowWBS) return 'wbs';
+    if (settings.raciShowTasks) return 'task';
+    return 'phase';
+  });
   const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
   const [newRoleName, setNewRoleName] = useState('');
   const [selectedEntity, setSelectedEntity] = useState<string | null>(null);
@@ -59,7 +67,7 @@ export function RACIMatrix() {
   };
 
   const validateRACI = (entityType: RACIEntityType, entityId: string, role: string, newResponsibility: RACIRole): { valid: boolean; message?: string } => {
-    if (newResponsibility === 'A') {
+    if (newResponsibility === 'A' && settings.raciValidateSingleAccountable) {
       // Check if there's already an Accountable for this entity
       const existingAccountable = raci.find(
         r => r.entityType === entityType && 
@@ -253,9 +261,18 @@ export function RACIMatrix() {
       {/* Tabs for different entity types */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as RACIEntityType)}>
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="phase">Phases ({phases.length})</TabsTrigger>
-          <TabsTrigger value="wbs">WBS Nodes ({wbs.length})</TabsTrigger>
-          <TabsTrigger value="task">Tasks ({tasks.length})</TabsTrigger>
+          {settings.raciShowPhases && (
+            <TabsTrigger value="phase">Phases ({phases.length})</TabsTrigger>
+          )}
+          {settings.raciShowWBS && (
+            <TabsTrigger value="wbs">WBS Nodes ({wbs.length})</TabsTrigger>
+          )}
+          {settings.raciShowTasks && (
+            <TabsTrigger value="task">Tasks ({tasks.length})</TabsTrigger>
+          )}
+          {settings.raciShowDeliverables && (
+            <TabsTrigger value="deliverable">Deliverables</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="phase" className="mt-4">

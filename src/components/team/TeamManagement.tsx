@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useProject } from '@/contexts/ProjectContext';
+import { useSettings } from '@/contexts/SettingsContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,6 +57,7 @@ export function TeamManagement() {
     risks,
     requirements
   } = useProject();
+  const { settings } = useSettings();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
@@ -290,15 +292,19 @@ export function TeamManagement() {
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Mail className="h-4 w-4" />
-                <span className="truncate">{member.email}</span>
-              </div>
-              {member.phone && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Phone className="h-4 w-4" />
-                  <span>{member.phone}</span>
-                </div>
+              {!settings.confidentialMode && (
+                <>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Mail className="h-4 w-4" />
+                    <span className="truncate">{member.email}</span>
+                  </div>
+                  {member.phone && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Phone className="h-4 w-4" />
+                      <span>{member.phone}</span>
+                    </div>
+                  )}
+                </>
               )}
               {member.organization && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">

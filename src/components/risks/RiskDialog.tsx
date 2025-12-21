@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useProject } from '@/contexts/ProjectContext';
+import { useSettings } from '@/contexts/SettingsContext';
 import { Risk, RiskCategory, RiskProbability, RiskImpact, RiskResponseStrategy, RiskStatus, RiskAction } from '@/types/project';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ export function RiskDialog({ open, onOpenChange, risk, mode }: RiskDialogProps) 
     tasks, 
     mode: projectMode 
   } = useProject();
+  const { settings } = useSettings();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -61,7 +63,9 @@ export function RiskDialog({ open, onOpenChange, risk, mode }: RiskDialogProps) 
   const [notes, setNotes] = useState('');
 
   const roles = projectMode === 'waterfall' ? projectRoles : agileRoles;
-  const calculatedScore = calculateRiskScore(probability, impact);
+  const calculatedScore = settings.risksAutoCalculateScore 
+    ? calculateRiskScore(probability, impact)
+    : 0;
 
   useEffect(() => {
     if (risk && mode === 'edit') {
@@ -88,12 +92,12 @@ export function RiskDialog({ open, onOpenChange, risk, mode }: RiskDialogProps) 
       setNextReviewDate(risk.nextReviewDate || '');
       setNotes(risk.notes || '');
     } else {
-      // Reset form
+      // Reset form with default values from settings
       setTitle('');
       setDescription('');
       setCategory('other');
-      setProbability('medium');
-      setImpact('medium');
+      setProbability(settings.risksDefaultProbability || 'medium');
+      setImpact(settings.risksDefaultImpact || 'medium');
       setRootCauses([]);
       setEffects([]);
       setTriggers([]);
@@ -336,14 +340,16 @@ export function RiskDialog({ open, onOpenChange, risk, mode }: RiskDialogProps) 
               </div>
             </div>
 
-            <div className="rounded-lg border border-border bg-muted/30 p-4">
-              <div className="flex items-center justify-between">
-                <Label>Risk Score</Label>
-                <Badge className="text-lg px-4 py-2">
-                  {calculatedScore}
-                </Badge>
+            {settings.risksAutoCalculateScore && (
+              <div className="rounded-lg border border-border bg-muted/30 p-4">
+                <div className="flex items-center justify-between">
+                  <Label>Risk Score</Label>
+                  <Badge className="text-lg px-4 py-2">
+                    {calculatedScore}
+                  </Badge>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

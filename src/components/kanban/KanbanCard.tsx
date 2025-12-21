@@ -1,6 +1,7 @@
 import { Task, TaskTag } from '@/types/project';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useSettings } from '@/contexts/SettingsContext';
 import { cn } from '@/lib/utils';
 import { 
   GripVertical, 
@@ -44,10 +45,18 @@ export function KanbanCard({
   onEdit,
   onDelete 
 }: KanbanCardProps) {
+  const { settings } = useSettings();
   const taskTags = tags.filter(tag => task.tags?.includes(tag.id));
   const dueDate = task.dueDate ? new Date(task.dueDate) : null;
   const isOverdue = dueDate && isPast(dueDate) && !isToday(dueDate) && task.status !== 'done';
   const isDueToday = dueDate && isToday(dueDate) && task.status !== 'done';
+  
+  // Card size based on settings
+  const cardSizeClasses = {
+    small: 'p-2 text-xs',
+    medium: 'p-3 text-sm',
+    large: 'p-4 text-base',
+  };
 
   return (
     <div
@@ -55,7 +64,8 @@ export function KanbanCard({
       onDragStart={(e) => onDragStart(e, task.id)}
       onClick={() => onClick?.(task)}
       className={cn(
-        "group cursor-grab rounded-lg border border-border bg-card p-3 shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary/50 active:cursor-grabbing active:opacity-70",
+        "group cursor-grab rounded-lg border border-border bg-card shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary/50 active:cursor-grabbing active:opacity-70",
+        cardSizeClasses[settings.kanbanCardSize],
         onClick && "cursor-pointer"
       )}
     >
@@ -86,7 +96,7 @@ export function KanbanCard({
       </p>
 
       {/* Tags */}
-      {taskTags.length > 0 && (
+      {settings.kanbanShowTags && taskTags.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">
           {taskTags.slice(0, 3).map((tag) => (
             <Badge
@@ -110,13 +120,13 @@ export function KanbanCard({
       {/* Footer */}
       <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-border">
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          {task.assignee && (
+          {settings.kanbanShowAssignees && task.assignee && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <User className="h-3 w-3 flex-shrink-0" />
               <span className="truncate">{task.assignee}</span>
             </div>
           )}
-          {task.storyPoints && (
+          {settings.kanbanShowStoryPoints && task.storyPoints && (
             <span className="flex h-5 w-5 items-center justify-center rounded bg-primary/10 text-[10px] font-medium text-primary flex-shrink-0">
               {task.storyPoints}
             </span>
@@ -124,7 +134,7 @@ export function KanbanCard({
         </div>
 
         <div className="flex items-center gap-1">
-          {dueDate && (
+          {settings.kanbanShowDueDates && dueDate && (
             <div className={cn(
               "flex items-center gap-1 text-[10px]",
               isOverdue && "text-destructive",
@@ -135,7 +145,7 @@ export function KanbanCard({
               <span>{format(dueDate, 'MMM dd')}</span>
             </div>
           )}
-          {task.estimatedHours && (
+          {settings.kanbanShowEstimatedHours && task.estimatedHours && (
             <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
               <Clock className="h-3 w-3" />
               <span>{task.estimatedHours}h</span>

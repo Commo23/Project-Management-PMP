@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ProjectProvider } from '@/contexts/ProjectContext';
+import { SettingsProvider } from '@/contexts/SettingsContext';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { ProjectFlow } from '@/components/flow/ProjectFlow';
@@ -16,8 +18,18 @@ import { GanttChart } from '@/components/charts/GanttChart';
 import { cn } from '@/lib/utils';
 
 export default function Index() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [activeView, setActiveView] = useState('flow');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const handleViewChange = (view: string) => {
+    if (view === 'settings') {
+      navigate('/settings');
+    } else {
+      setActiveView(view);
+    }
+  };
 
   const renderView = () => {
     try {
@@ -59,15 +71,16 @@ export default function Index() {
   };
 
   return (
-    <ProjectProvider>
-      <div className="min-h-screen bg-background">
+    <SettingsProvider>
+      <ProjectProvider>
+        <div className="min-h-screen bg-background">
         <Header sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
         <div className="flex pt-16">
           <div className={cn(
             "fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] transition-transform duration-300",
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           )}>
-            <Sidebar activeView={activeView} onViewChange={setActiveView} />
+            <Sidebar activeView={activeView} onViewChange={handleViewChange} />
           </div>
           <main className={cn(
             "flex-1 transition-all duration-300 min-w-0",
@@ -79,6 +92,7 @@ export default function Index() {
           </main>
         </div>
       </div>
-    </ProjectProvider>
+      </ProjectProvider>
+    </SettingsProvider>
   );
 }

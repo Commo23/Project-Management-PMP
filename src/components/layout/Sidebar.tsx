@@ -13,7 +13,8 @@ import {
   Target,
   ListTodo,
   Calendar,
-  UserCircle
+  UserCircle,
+  Settings
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -37,6 +38,7 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
     { id: 'team', label: t.nav.team, icon: UserCircle },
     { id: 'requirements', label: t.nav.requirements, icon: FileText },
     { id: 'gantt', label: t.nav.timeline, icon: Calendar },
+    { id: 'settings', label: t.settings.settings, icon: Settings },
   ];
 
   return (

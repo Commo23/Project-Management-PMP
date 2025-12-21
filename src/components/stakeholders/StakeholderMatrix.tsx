@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useProject } from '@/contexts/ProjectContext';
+import { useSettings } from '@/contexts/SettingsContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +37,7 @@ export function StakeholderMatrix() {
     risks,
     requirements
   } = useProject();
+  const { settings } = useSettings();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedStakeholder, setSelectedStakeholder] = useState<Stakeholder | null>(null);
@@ -289,7 +291,8 @@ export function StakeholderMatrix() {
       </div>
 
       {/* Power/Interest Matrix */}
-      <div className="rounded-xl border border-border bg-card p-6">
+      {!settings.confidentialMode && (
+        <div className="rounded-xl border border-border bg-card p-6">
         <div className="mb-4 text-center">
           <p className="text-sm font-medium text-muted-foreground">← Low Interest → High Interest</p>
         </div>
@@ -347,7 +350,8 @@ export function StakeholderMatrix() {
             ↑ High Power | Low Power ↓
           </p>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Stakeholder List */}
       <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -361,17 +365,21 @@ export function StakeholderMatrix() {
                 <th className="p-3 text-left text-sm font-medium text-muted-foreground">Name</th>
                 <th className="p-3 text-left text-sm font-medium text-muted-foreground">Role</th>
                 <th className="p-3 text-left text-sm font-medium text-muted-foreground">Organization</th>
-                <th className="p-3 text-left text-sm font-medium text-muted-foreground">Contact</th>
+                {!settings.confidentialMode && (
+                  <th className="p-3 text-left text-sm font-medium text-muted-foreground">Contact</th>
+                )}
                 <th className="p-3 text-left text-sm font-medium text-muted-foreground">Influence</th>
                 <th className="p-3 text-left text-sm font-medium text-muted-foreground">Interest</th>
-                <th className="p-3 text-left text-sm font-medium text-muted-foreground">Engagement</th>
+                {!settings.confidentialMode && (
+                  <th className="p-3 text-left text-sm font-medium text-muted-foreground">Engagement</th>
+                )}
                 <th className="p-3 text-left text-sm font-medium text-muted-foreground">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredStakeholders.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-muted-foreground">
+                  <td colSpan={settings.confidentialMode ? 7 : 8} className="p-8 text-center text-muted-foreground">
                     No stakeholders found. {stakeholders.length === 0 ? 'Add your first stakeholder to get started.' : 'Try adjusting your filters.'}
                   </td>
                 </tr>
@@ -400,22 +408,24 @@ export function StakeholderMatrix() {
                           {stakeholder.organization}
                         </div>
                       </td>
-                      <td className="p-3">
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {stakeholder.email && (
-                            <div className="flex items-center gap-1">
-                              <Mail className="h-3 w-3" />
-                              <span className="truncate max-w-[120px]">{stakeholder.email}</span>
-                            </div>
-                          )}
-                          {stakeholder.phone && (
-                            <div className="flex items-center gap-1">
-                              <Phone className="h-3 w-3" />
-                              <span>{stakeholder.phone}</span>
-                            </div>
-                          )}
-                        </div>
-                      </td>
+                      {!settings.confidentialMode && (
+                        <td className="p-3">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {stakeholder.email && (
+                              <div className="flex items-center gap-1">
+                                <Mail className="h-3 w-3" />
+                                <span className="truncate max-w-[120px]">{stakeholder.email}</span>
+                              </div>
+                            )}
+                            {stakeholder.phone && (
+                              <div className="flex items-center gap-1">
+                                <Phone className="h-3 w-3" />
+                                <span>{stakeholder.phone}</span>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      )}
                       <td className="p-3">
                         <Badge className={cn("capitalize", influenceColors[stakeholder.influence])}>
                           {stakeholder.influence}
@@ -426,11 +436,13 @@ export function StakeholderMatrix() {
                           {stakeholder.interest}
                         </Badge>
                       </td>
-                      <td className="p-3">
-                        <Badge className={cn("capitalize", engagementColors[stakeholder.engagementLevel])}>
-                          {stakeholder.engagementLevel}
-                        </Badge>
-                      </td>
+                      {!settings.confidentialMode && (
+                        <td className="p-3">
+                          <Badge className={cn("capitalize", engagementColors[stakeholder.engagementLevel])}>
+                            {stakeholder.engagementLevel}
+                          </Badge>
+                        </td>
+                      )}
                       <td className="p-3" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-2">
                           <Button
@@ -500,7 +512,7 @@ export function StakeholderMatrix() {
                     <p className="text-sm mt-1">{selectedStakeholderDetail.communicationFrequency || 'N/A'}</p>
                   </div>
                 </div>
-                {selectedStakeholderDetail.email && (
+                {!settings.confidentialMode && selectedStakeholderDetail.email && (
                   <div>
                     <Label>Email</Label>
                     <p className="text-sm mt-1 flex items-center gap-2">
@@ -509,7 +521,7 @@ export function StakeholderMatrix() {
                     </p>
                   </div>
                 )}
-                {selectedStakeholderDetail.phone && (
+                {!settings.confidentialMode && selectedStakeholderDetail.phone && (
                   <div>
                     <Label>Phone</Label>
                     <p className="text-sm mt-1 flex items-center gap-2">
@@ -529,14 +541,25 @@ export function StakeholderMatrix() {
                 )}
               </TabsContent>
               <TabsContent value="engagement" className="space-y-4">
-                <div>
-                  <Label>Engagement Strategy</Label>
-                  <p className="text-sm whitespace-pre-wrap mt-1">{selectedStakeholderDetail.engagementStrategy || 'N/A'}</p>
-                </div>
-                <div>
-                  <Label>Communication Preferences</Label>
-                  <p className="text-sm mt-1">{selectedStakeholderDetail.communicationPreferences || 'N/A'}</p>
-                </div>
+                {!settings.confidentialMode ? (
+                  <>
+                    <div>
+                      <Label>Engagement Strategy</Label>
+                      <p className="text-sm whitespace-pre-wrap mt-1">{selectedStakeholderDetail.engagementStrategy || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <Label>Communication Preferences</Label>
+                      <p className="text-sm mt-1">{selectedStakeholderDetail.communicationPreferences || 'N/A'}</p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center p-8 text-muted-foreground">
+                    <div className="text-center">
+                      <Lock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p className="text-sm">Information confidentielle masquée</p>
+                    </div>
+                  </div>
+                )}
               </TabsContent>
               <TabsContent value="needs" className="space-y-4">
                 <div>
