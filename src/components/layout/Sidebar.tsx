@@ -14,7 +14,10 @@ import {
   ListTodo,
   Calendar,
   UserCircle,
-  Settings
+  Settings,
+  Home,
+  History,
+  Link2
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -27,6 +30,7 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
   const { t, language } = useI18n();
 
   const navigationItems = [
+    { id: 'dashboard', label: language === 'fr' ? 'Tableau de Bord' : 'Dashboard', icon: Home },
     { id: 'flow', label: t.nav.projectFlow, icon: GitBranch },
     { id: 'kanban', label: t.nav.kanbanBoard, icon: LayoutDashboard },
     { id: 'raci', label: t.nav.raciMatrix, icon: Table2 },
@@ -38,6 +42,8 @@ export function Sidebar({ activeView, onViewChange }: SidebarProps) {
     { id: 'team', label: t.nav.team, icon: UserCircle },
     { id: 'requirements', label: t.nav.requirements, icon: FileText },
     { id: 'gantt', label: t.nav.timeline, icon: Calendar },
+    { id: 'history', label: language === 'fr' ? 'Historique' : 'History', icon: History },
+    { id: 'integrations', label: language === 'fr' ? 'Intégrations' : 'Integrations', icon: Link2 },
     { id: 'settings', label: t.settings.settings, icon: Settings },
   ];
 

@@ -12,6 +12,9 @@ import { cn } from '@/lib/utils';
 import { AlertTriangle, Shield, RefreshCw, Check, Plus, Search, Filter, X, Link2, TrendingUp, DollarSign, Calendar } from 'lucide-react';
 import { Risk, RiskCategory, RiskStatus, RiskResponseStrategy } from '@/types/project';
 import { RiskDialog } from './RiskDialog';
+import { CommentSection } from '@/components/comments/CommentSection';
+import { useI18n } from '@/contexts/I18nContext';
+import { MessageSquare } from 'lucide-react';
 
 const probabilityColors = {
   low: 'bg-green-500/20 text-green-700 dark:text-green-400',
@@ -57,6 +60,7 @@ export function RiskRegister() {
     tasks
   } = useProject();
   const { settings } = useSettings();
+  const { language } = useI18n();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState<Risk | null>(null);
@@ -517,10 +521,22 @@ export function RiskRegister() {
           {selectedRiskDetail && (
             <Tabs defaultValue="overview" className="w-full">
               <TabsList>
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="analysis">Analysis</TabsTrigger>
-                <TabsTrigger value="response">Response</TabsTrigger>
-                <TabsTrigger value="links">Links</TabsTrigger>
+                <TabsTrigger value="overview">
+                  {language === 'fr' ? 'Vue d\'ensemble' : 'Overview'}
+                </TabsTrigger>
+                <TabsTrigger value="analysis">
+                  {language === 'fr' ? 'Analyse' : 'Analysis'}
+                </TabsTrigger>
+                <TabsTrigger value="response">
+                  {language === 'fr' ? 'Réponse' : 'Response'}
+                </TabsTrigger>
+                <TabsTrigger value="links">
+                  {language === 'fr' ? 'Liens' : 'Links'}
+                </TabsTrigger>
+                <TabsTrigger value="comments">
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  {language === 'fr' ? 'Commentaires' : 'Comments'}
+                </TabsTrigger>
               </TabsList>
               <TabsContent value="overview" className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -653,7 +669,14 @@ export function RiskRegister() {
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No links defined</p>
+                  <p className="text-sm text-muted-foreground">
+                    {language === 'fr' ? 'Aucun lien défini' : 'No links defined'}
+                  </p>
+                )}
+              </TabsContent>
+              <TabsContent value="comments" className="space-y-4">
+                {selectedRiskDetail && (
+                  <CommentSection entityType="risk" entityId={selectedRiskDetail.id} />
                 )}
               </TabsContent>
             </Tabs>

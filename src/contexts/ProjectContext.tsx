@@ -1,15 +1,17 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { 
   ProjectMode, Phase, Task, BacklogItem, Sprint, Release, 
   RACIEntry, WBSNode, Risk, Stakeholder, Requirement, GanttTask,
   TaskTag, TaskHistoryEntry, RiskProbability, RiskImpact, StakeholderInteraction,
-  TeamMember
+  TeamMember, ProjectState
 } from '@/types/project';
 import {
   waterfallPhases, agilePhases, hybridPhases, sampleTasks, sampleBacklog, sampleSprints,
   sampleReleases, sampleRaci, sampleWbs, sampleRisks, sampleStakeholders,
   sampleRequirements, sampleGanttTasks, sampleTags, sampleTeamMembers
 } from '@/data/projectData';
+import { useProjectManager } from './ProjectManagerContext';
+import { useSettings } from './SettingsContext';
 
 interface ProjectContextType {
   mode: ProjectMode;
@@ -81,6 +83,9 @@ interface ProjectContextType {
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 export function ProjectProvider({ children }: { children: ReactNode }) {
+  const { currentProjectId, loadProject, saveProject } = useProjectManager();
+  const { settings } = useSettings();
+  
   const [mode, setMode] = useState<ProjectMode>('waterfall');
   const [tasks, setTasks] = useState<Task[]>(sampleTasks);
   const [backlog, setBacklog] = useState<BacklogItem[]>(sampleBacklog);
@@ -95,6 +100,59 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const [requirements, setRequirements] = useState<Requirement[]>(sampleRequirements);
   const [ganttTasks, setGanttTasks] = useState<GanttTask[]>(sampleGanttTasks);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(sampleTeamMembers);
+  const [sprints] = useState<Sprint[]>(sampleSprints);
+  const [releases] = useState<Release[]>(sampleReleases);
+
+  // Load project data from ProjectManager when currentProjectId changes
+  useEffect(() => {
+    if (currentProjectId) {
+      const projectData = loadProject(currentProjectId);
+      if (projectData) {
+        setMode(projectData.mode || 'waterfall');
+        setTasks(projectData.tasks || []);
+        setBacklog(projectData.backlog || []);
+        setRaci(projectData.raci || []);
+        setRisks(projectData.risks || []);
+        setCustomPhases(projectData.customPhases || []);
+        setTaskHistory(projectData.taskHistory || []);
+        setWbs(projectData.wbs || []);
+        setCustomRoles(projectData.customRoles || []);
+        setStakeholders(projectData.stakeholders || []);
+        setRequirements(projectData.requirements || []);
+        setGanttTasks(projectData.ganttTasks || []);
+        setTeamMembers(projectData.teamMembers || []);
+      }
+    }
+  }, [currentProjectId, loadProject]);
+
+  // Auto-save project data to ProjectManager
+  useEffect(() => {
+    if (!currentProjectId || !settings.autoSave) return;
+
+    const autoSaveInterval = setInterval(() => {
+      const projectState: ProjectState = {
+        mode,
+        phases: [],
+        tasks,
+        backlog,
+        sprints,
+        releases,
+        raci,
+        wbs,
+        risks,
+        stakeholders,
+        requirements,
+        ganttTasks,
+        teamMembers,
+        customPhases,
+        taskHistory,
+        customRoles,
+      };
+      saveProject(currentProjectId, projectState);
+    }, settings.autoSaveInterval * 1000);
+
+    return () => clearInterval(autoSaveInterval);
+  }, [currentProjectId, mode, tasks, backlog, raci, wbs, risks, stakeholders, requirements, ganttTasks, teamMembers, customPhases, taskHistory, customRoles, sprints, releases, saveProject, settings.autoSave, settings.autoSaveInterval]);
 
   // Get base phases based on mode
   const basePhases = mode === 'waterfall' 
@@ -613,8 +671,8 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       setTasks,
       backlog,
       setBacklog,
-      sprints: sampleSprints,
-      releases: sampleReleases,
+      sprints,
+      releases,
       raci,
       setRaci,
       addRACIEntry,

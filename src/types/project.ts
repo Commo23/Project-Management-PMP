@@ -479,4 +479,110 @@ export interface ProjectState {
   requirements: Requirement[];
   ganttTasks: GanttTask[];
   teamMembers: TeamMember[];
+  customPhases?: Phase[];
+  taskHistory?: TaskHistoryEntry[];
+  customRoles?: string[];
+  comments?: Comment[];
+  shares?: ProjectShare[];
+  invitations?: ProjectInvitation[];
+}
+
+// Project Management Types
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  mode: ProjectMode;
+  createdAt: string;
+  updatedAt: string;
+  data: ProjectState;
+}
+
+export interface ProjectMetadata {
+  id: string;
+  name: string;
+  description?: string;
+  mode: ProjectMode;
+  createdAt: string;
+  updatedAt: string;
+  taskCount: number;
+  riskCount: number;
+  stakeholderCount: number;
+  teamMemberCount: number;
+}
+
+// Collaboration Types
+export type CommentEntityType = 'task' | 'backlog' | 'risk' | 'stakeholder' | 'requirement' | 'wbs' | 'gantt' | 'phase';
+
+export interface Comment {
+  id: string;
+  entityType: CommentEntityType;
+  entityId: string;
+  content: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar?: string;
+  createdAt: string;
+  updatedAt?: string;
+  edited?: boolean;
+  mentions?: string[]; // User IDs mentioned in the comment
+  attachments?: CommentAttachment[];
+  parentCommentId?: string; // For threaded comments
+  replies?: Comment[];
+  reactions?: CommentReaction[];
+}
+
+export interface CommentAttachment {
+  id: string;
+  name: string;
+  url: string;
+  type: string;
+  size: number;
+  uploadedAt: string;
+}
+
+export interface CommentReaction {
+  userId: string;
+  userName: string;
+  emoji: string;
+  createdAt: string;
+}
+
+// Project Sharing Types
+export type ProjectPermission = 'view' | 'comment' | 'edit' | 'admin';
+
+export interface ProjectShare {
+  id: string;
+  projectId: string;
+  userId?: string; // If shared with specific user
+  email?: string; // If shared via email
+  permission: ProjectPermission;
+  sharedBy: string;
+  sharedAt: string;
+  expiresAt?: string;
+  accessToken?: string; // For public links
+}
+
+export interface ProjectInvitation {
+  id: string;
+  projectId: string;
+  email: string;
+  permission: ProjectPermission;
+  invitedBy: string;
+  invitedAt: string;
+  acceptedAt?: string;
+  token: string;
+  expiresAt: string;
+}
+
+// User Types (for collaboration)
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  role?: 'admin' | 'project_manager' | 'team_member' | 'viewer';
+  status?: 'active' | 'inactive' | 'pending';
+  createdAt: string;
+  lastActiveAt?: string;
 }

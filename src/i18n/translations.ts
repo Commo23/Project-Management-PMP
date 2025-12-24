@@ -30,6 +30,7 @@ export interface Translations {
     date: string;
     type: string;
     notes: string;
+    export: string;
   };
 
   // Navigation
@@ -388,6 +389,7 @@ export const translations: Record<Language, Translations> = {
       date: 'Date',
       type: 'Type',
       notes: 'Notes',
+      export: 'Export',
     },
     nav: {
       projectFlow: 'Project Flow',
@@ -706,6 +708,7 @@ export const translations: Record<Language, Translations> = {
       date: 'Date',
       type: 'Type',
       notes: 'Notes',
+      export: 'Exporter',
     },
     nav: {
       projectFlow: 'Flux du Projet',

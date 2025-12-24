@@ -25,6 +25,7 @@ export function BacklogView() {
   const [editingItem, setEditingItem] = useState<BacklogItem | null>(null);
   const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
   const [selectedItem, setSelectedItem] = useState<BacklogItem | null>(null);
+  const [initialSprintId, setInitialSprintId] = useState<string | undefined>(undefined);
 
   const tags = taskTags || sampleTags;
 
@@ -94,15 +95,17 @@ export function BacklogView() {
     e.dataTransfer.dropEffect = 'move';
   };
 
-  const handleAddItem = () => {
+  const handleAddItem = (sprintId?: string) => {
     setEditingItem(null);
     setDialogMode('add');
+    setInitialSprintId(sprintId);
     setDialogOpen(true);
   };
 
   const handleEditItem = (item: BacklogItem) => {
     setEditingItem(item);
     setDialogMode('edit');
+    setInitialSprintId(undefined); // Don't pre-fill sprint when editing
     setDialogOpen(true);
   };
 
@@ -375,16 +378,30 @@ export function BacklogView() {
               >
                 <div className="border-b border-border p-4">
                   <div className="flex items-center justify-between">
-                    <div>
+                    <div className="flex-1">
                       <h3 className="font-semibold text-foreground">{sprint.name}</h3>
                       <p className="text-sm text-muted-foreground">{sprint.goal}</p>
                     </div>
-                    <Badge variant="outline">
-                      {sprint.items.reduce((sum, item) => sum + (item.storyPoints || 0), 0)} pts
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">
+                        {sprint.items.reduce((sum, item) => sum + (item.storyPoints || 0), 0)} pts
+                      </Badge>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddItem(sprint.id);
+                        }}
+                        className="gap-2"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Add Item
+                      </Button>
+                    </div>
                   </div>
                 </div>
-                <div className="p-4 space-y-2 min-h-[100px]">
+                <div className="p-4 space-y-2 min-h-[200px]">
                   {sprint.items.map((item) => (
                     <BacklogItemCard
                       key={item.id}
@@ -392,12 +409,16 @@ export function BacklogView() {
                       tags={tags || []}
                       onEdit={handleEditItem}
                       onDelete={handleDeleteItem}
+                      onClick={setSelectedItem}
                       isCompact={true}
                     />
                   ))}
                   {sprint.items.length === 0 && (
-                    <div className="flex h-16 items-center justify-center rounded-lg border border-dashed border-border">
-                      <p className="text-xs text-muted-foreground">Drop items here</p>
+                    <div className="flex flex-col h-32 items-center justify-center rounded-lg border border-dashed border-border bg-muted/20">
+                      <p className="text-sm text-muted-foreground mb-2">No items in this sprint</p>
+                      <p className="text-xs text-muted-foreground text-center px-4">
+                        Drag items from Product Backlog or click "Add Item" to create new ones
+                      </p>
                     </div>
                   )}
                 </div>
@@ -410,9 +431,17 @@ export function BacklogView() {
       {/* Dialogs */}
       <BacklogItemDialog
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) {
+            setInitialSprintId(undefined);
+            setEditingItem(null);
+          }
+        }}
         item={editingItem}
         backlogItems={backlog}
+        sprints={sprints.map(s => ({ id: s.id, name: s.name }))}
+        initialSprintId={initialSprintId}
         mode={dialogMode}
         onSave={handleSaveItem}
       />

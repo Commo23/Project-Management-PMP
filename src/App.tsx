@@ -5,6 +5,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { I18nProvider } from "@/contexts/I18nContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
+import { ProjectManagerProvider } from "@/contexts/ProjectManagerContext";
+import { ProjectProvider } from "@/contexts/ProjectContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
+import { CollaborationProvider } from "@/contexts/CollaborationContext";
+import { IntegrationProvider } from "@/contexts/IntegrationContext";
 import Index from "./pages/Index";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
@@ -15,20 +20,32 @@ const App = () => {
   try {
     return (
       <I18nProvider>
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </QueryClientProvider>
+        <ProjectManagerProvider>
+          <SettingsProvider>
+            <ProjectProvider>
+              <CollaborationProvider>
+                <IntegrationProvider>
+                  <NotificationProvider>
+                    <QueryClientProvider client={queryClient}>
+                  <TooltipProvider>
+                    <Toaster />
+                    <Sonner />
+                    <BrowserRouter>
+                      <Routes>
+                        <Route path="/" element={<Index />} />
+                        <Route path="/settings" element={<SettingsPage />} />
+                        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </BrowserRouter>
+                  </TooltipProvider>
+                </QueryClientProvider>
+                  </NotificationProvider>
+                </IntegrationProvider>
+              </CollaborationProvider>
+            </ProjectProvider>
+          </SettingsProvider>
+        </ProjectManagerProvider>
       </I18nProvider>
     );
   } catch (error) {

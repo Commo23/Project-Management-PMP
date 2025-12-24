@@ -15,12 +15,15 @@ import { StakeholderMatrix } from '@/components/stakeholders/StakeholderMatrix';
 import { TeamManagement } from '@/components/team/TeamManagement';
 import { RequirementsMatrix } from '@/components/requirements/RequirementsMatrix';
 import { GanttChart } from '@/components/charts/GanttChart';
+import { Dashboard } from '@/components/dashboard/Dashboard';
+import { HistoryView } from '@/components/history/HistoryView';
+import { IntegrationsPage } from '@/components/integrations/IntegrationsPage';
 import { cn } from '@/lib/utils';
 
 export default function Index() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeView, setActiveView] = useState('flow');
+  const [activeView, setActiveView] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const handleViewChange = (view: string) => {
@@ -34,6 +37,8 @@ export default function Index() {
   const renderView = () => {
     try {
       switch (activeView) {
+        case 'dashboard':
+          return <Dashboard />;
         case 'flow':
           return <ProjectFlow />;
         case 'kanban':
@@ -56,8 +61,12 @@ export default function Index() {
           return <RequirementsMatrix />;
         case 'gantt':
           return <GanttChart />;
+        case 'history':
+          return <HistoryView />;
+        case 'integrations':
+          return <IntegrationsPage />;
         default:
-          return <ProjectFlow />;
+          return <Dashboard />;
       }
     } catch (error) {
       console.error('Error rendering view:', error);
@@ -74,7 +83,11 @@ export default function Index() {
     <SettingsProvider>
       <ProjectProvider>
         <div className="min-h-screen bg-background">
-        <Header sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+        <Header 
+          sidebarOpen={sidebarOpen} 
+          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          onViewChange={handleViewChange}
+        />
         <div className="flex pt-16">
           <div className={cn(
             "fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] transition-transform duration-300",

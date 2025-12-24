@@ -3,20 +3,28 @@ import { useProject } from '@/contexts/ProjectContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Layers, RefreshCw, Zap, Download, Settings, Menu, X, Languages } from 'lucide-react';
+import { Layers, RefreshCw, Zap, Download, Settings, Menu, X, Languages, Upload, Share2 } from 'lucide-react';
 import { ExportDialog } from './ExportDialog';
 import { SettingsDialog } from './SettingsDialog';
+import { ProjectSelector } from './ProjectSelector';
+import { ImportDialog } from './ImportDialog';
+import { ShareProjectDialog } from '@/components/sharing/ShareProjectDialog';
+import { GlobalSearch } from '@/components/search/GlobalSearch';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 interface HeaderProps {
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
+  onViewChange?: (view: string) => void;
 }
 
-export function Header({ sidebarOpen, onToggleSidebar }: HeaderProps) {
+export function Header({ sidebarOpen, onToggleSidebar, onViewChange }: HeaderProps) {
   const { mode, setMode } = useProject();
   const { language, setLanguage, t } = useI18n();
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -83,6 +91,9 @@ export function Header({ sidebarOpen, onToggleSidebar }: HeaderProps) {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
+          <ProjectSelector />
+          <GlobalSearch onViewChange={onViewChange} />
+          <NotificationBell />
           <Select value={language} onValueChange={(value) => setLanguage(value as 'en' | 'fr')}>
             <SelectTrigger className="w-[100px] h-9">
               <div className="flex items-center gap-2">
@@ -95,6 +106,26 @@ export function Header({ sidebarOpen, onToggleSidebar }: HeaderProps) {
               <SelectItem value="fr">Français</SelectItem>
             </SelectContent>
           </Select>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-2"
+            onClick={() => setIsImportDialogOpen(true)}
+            title={language === 'fr' ? 'Importer un projet' : 'Import project'}
+          >
+            <Upload className="h-4 w-4" />
+            <span className="hidden sm:inline">{language === 'fr' ? 'Importer' : 'Import'}</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-2"
+            onClick={() => setIsShareDialogOpen(true)}
+            title={language === 'fr' ? 'Partager le projet' : 'Share project'}
+          >
+            <Share2 className="h-4 w-4" />
+            <span className="hidden sm:inline">{language === 'fr' ? 'Partager' : 'Share'}</span>
+          </Button>
           <Button 
             variant="outline" 
             size="sm" 
@@ -116,7 +147,9 @@ export function Header({ sidebarOpen, onToggleSidebar }: HeaderProps) {
       </div>
 
       {/* Dialogs */}
+      <ShareProjectDialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen} />
       <ExportDialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen} />
+      <ImportDialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen} />
       <SettingsDialog open={isSettingsDialogOpen} onOpenChange={setIsSettingsDialogOpen} />
     </header>
   );

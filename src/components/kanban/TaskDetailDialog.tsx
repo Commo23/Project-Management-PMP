@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TaskHistory } from './TaskHistory';
-import { X, User, Calendar, Clock, Tag as TagIcon, FileText, AlertCircle } from 'lucide-react';
+import { CommentSection } from '@/components/comments/CommentSection';
+import { X, User, Calendar, Clock, Tag as TagIcon, FileText, AlertCircle, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/contexts/I18nContext';
 
 interface TaskDetailDialogProps {
   open: boolean;
@@ -32,6 +34,7 @@ export function TaskDetailDialog({
   history = [],
   onEdit 
 }: TaskDetailDialogProps) {
+  const { language } = useI18n();
   if (!task) return null;
 
   const taskTags = tags.filter(tag => task.tags?.includes(tag.id));
@@ -73,8 +76,16 @@ export function TaskDetailDialog({
 
         <Tabs defaultValue="details" className="mt-4">
           <TabsList>
-            <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
+            <TabsTrigger value="details">
+              {language === 'fr' ? 'Détails' : 'Details'}
+            </TabsTrigger>
+            <TabsTrigger value="comments">
+              <MessageSquare className="h-4 w-4 mr-2" />
+              {language === 'fr' ? 'Commentaires' : 'Comments'}
+            </TabsTrigger>
+            <TabsTrigger value="history">
+              {language === 'fr' ? 'Historique' : 'History'}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="details" className="space-y-6 mt-4">
@@ -185,6 +196,10 @@ export function TaskDetailDialog({
                 </div>
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="comments" className="mt-4">
+            <CommentSection entityType="task" entityId={task.id} />
           </TabsContent>
 
           <TabsContent value="history" className="mt-4">

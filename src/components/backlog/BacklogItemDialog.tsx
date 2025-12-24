@@ -17,6 +17,8 @@ interface BacklogItemDialogProps {
   onOpenChange: (open: boolean) => void;
   item?: BacklogItem | null;
   backlogItems?: BacklogItem[]; // For dependencies and epic selection
+  sprints?: { id: string; name: string }[]; // For sprint selection
+  initialSprintId?: string; // Pre-fill sprint when adding from sprint
   onSave: (item: Omit<BacklogItem, 'id' | 'order' | 'createdAt' | 'updatedAt'>) => void;
   mode: 'add' | 'edit';
 }
@@ -48,7 +50,7 @@ const moscowOptions: { value: MoSCoW; label: string }[] = [
 
 const tShirtSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'] as const;
 
-export function BacklogItemDialog({ open, onOpenChange, item, backlogItems = [], onSave, mode }: BacklogItemDialogProps) {
+export function BacklogItemDialog({ open, onOpenChange, item, backlogItems = [], sprints = [], initialSprintId, onSave, mode }: BacklogItemDialogProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState<BacklogItemType>('story');
@@ -70,6 +72,7 @@ export function BacklogItemDialog({ open, onOpenChange, item, backlogItems = [],
   const [newDoDItem, setNewDoDItem] = useState('');
   const [businessJustification, setBusinessJustification] = useState('');
   const [notes, setNotes] = useState('');
+  const [sprintId, setSprintId] = useState<string | undefined>(initialSprintId);
 
   useEffect(() => {
     if (item && mode === 'edit') {
@@ -91,6 +94,7 @@ export function BacklogItemDialog({ open, onOpenChange, item, backlogItems = [],
       setDefinitionOfDone(Array.isArray(item.definitionOfDone) ? item.definitionOfDone : []);
       setBusinessJustification(item.businessJustification || '');
       setNotes(item.notes || '');
+      setSprintId(item.sprintId);
     } else {
       // Reset for add mode
       setTitle('');
@@ -111,11 +115,12 @@ export function BacklogItemDialog({ open, onOpenChange, item, backlogItems = [],
       setDefinitionOfDone([]);
       setBusinessJustification('');
       setNotes('');
+      setSprintId(initialSprintId); // Use initialSprintId when adding
     }
     setNewCriterion('');
     setNewDoRItem('');
     setNewDoDItem('');
-  }, [item, mode, open]);
+  }, [item, mode, open, initialSprintId]);
 
   const addAcceptanceCriterion = () => {
     if (newCriterion.trim()) {
@@ -163,7 +168,7 @@ export function BacklogItemDialog({ open, onOpenChange, item, backlogItems = [],
       title: title.trim(),
       description: description.trim(),
       type,
-      status,
+      status: sprintId ? 'in-sprint' : status, // Auto-set to 'in-sprint' if assigned to sprint
       priority,
       moscow,
       businessValue: businessValue || undefined,
@@ -181,6 +186,7 @@ export function BacklogItemDialog({ open, onOpenChange, item, backlogItems = [],
       refinementStatus: 'not-started',
       businessJustification: businessJustification || undefined,
       notes: notes || undefined,
+      sprintId: sprintId || undefined,
       createdBy: item?.createdBy || 'current-user',
     });
 
@@ -261,6 +267,33 @@ export function BacklogItemDialog({ open, onOpenChange, item, backlogItems = [],
                   </SelectContent>
                 </Select>
               </div>
+
+              {sprints.length > 0 && (
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="sprint">Sprint</Label>
+                  <Select 
+                    value={sprintId || '__none__'} 
+                    onValueChange={(value) => setSprintId(value === '__none__' ? undefined : value)}
+                  >
+                    <SelectTrigger id="sprint">
+                      <SelectValue placeholder="No Sprint" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">No Sprint</SelectItem>
+                      {sprints.map((sprint) => (
+                        <SelectItem key={sprint.id} value={sprint.id}>
+                          {sprint.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {sprintId && (
+                    <p className="text-xs text-muted-foreground">
+                      This item will be assigned to the selected sprint
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="priority">Priority</Label>
