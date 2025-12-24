@@ -1,9 +1,19 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useProject } from '@/contexts/ProjectContext';
 import { useI18n } from '@/contexts/I18nContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Layers, RefreshCw, Zap, Download, Settings, Menu, X, Languages, Upload, Share2 } from 'lucide-react';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator,
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Layers, RefreshCw, Zap, Download, Settings, Menu, X, Languages, Upload, Share2, LogOut, User } from 'lucide-react';
 import { ExportDialog } from './ExportDialog';
 import { SettingsDialog } from './SettingsDialog';
 import { ProjectSelector } from './ProjectSelector';
@@ -21,10 +31,27 @@ interface HeaderProps {
 export function Header({ sidebarOpen, onToggleSidebar, onViewChange }: HeaderProps) {
   const { mode, setMode } = useProject();
   const { language, setLanguage, t } = useI18n();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const getUserInitials = () => {
+    if (!user) return 'U';
+    return user.name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -143,6 +170,37 @@ export function Header({ sidebarOpen, onToggleSidebar, onViewChange }: HeaderPro
           >
             <Settings className="h-4 w-4" />
           </Button>
+          {user && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="px-2 py-1.5">
+                  <p className="text-sm font-medium">{user.name}</p>
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <User className="mr-2 h-4 w-4" />
+                  {language === 'fr' ? 'Profil' : 'Profile'}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsSettingsDialogOpen(true)}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  {t.header.settings}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  {language === 'fr' ? 'Déconnexion' : 'Logout'}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 
