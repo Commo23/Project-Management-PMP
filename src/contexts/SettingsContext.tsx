@@ -126,8 +126,8 @@ const defaultSettings: AppSettings = {
   theme: 'system',
   dateFormat: 'YYYY-MM-DD',
   timeFormat: '24h',
-  density: 'comfortable',
-  fontSize: 'medium',
+  density: 'compact',
+  fontSize: 'small',
   showSidebar: true,
   confidentialMode: false,
   
@@ -223,9 +223,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        return { ...defaultSettings, ...parsed };
+        // Merge with defaults, but ensure density and fontSize are set if not present
+        const merged = { ...defaultSettings, ...parsed };
+        // If density or fontSize are not in saved settings, use defaults
+        if (!parsed.density) merged.density = defaultSettings.density;
+        if (!parsed.fontSize) merged.fontSize = defaultSettings.fontSize;
+        return merged;
       } catch (e) {
         console.error('Error loading settings:', e);
+        return defaultSettings;
       }
     }
     return defaultSettings;
@@ -238,6 +244,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     // Apply theme
     applyTheme(settings.theme);
     
+    // Apply density and font size
+    const root = document.documentElement;
+    root.setAttribute('data-density', settings.density);
+    root.setAttribute('data-font-size', settings.fontSize);
+    
     // Listen for system theme changes
     if (settings.theme === 'system') {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -247,15 +258,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     }
   }, [settings]);
 
-  // Apply theme on mount
+  // Apply theme, density and font size on mount (initial load)
   useEffect(() => {
     applyTheme(settings.theme);
     
-    // Apply density and font size
+    // Apply density and font size immediately on mount
     const root = document.documentElement;
     root.setAttribute('data-density', settings.density);
     root.setAttribute('data-font-size', settings.fontSize);
-  }, []);
+  }, []); // Only run once on mount
 
   const updateSettings = (updates: Partial<AppSettings>) => {
     setSettings(prev => {
